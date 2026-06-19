@@ -83,7 +83,7 @@ function useToggle(initialValue = false) {
   const [flag, setFlag] = useState(initialValue);
 
   const toggle = () => {
-    setFlag(prev => !prev);
+    setFlag(!flag);
   };
 
   return [flag, toggle];

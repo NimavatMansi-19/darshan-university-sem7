@@ -601,3 +601,110 @@ Use it when
 | Logic inside component | Logic inside reducer |
 
 ---
+## Todo List
+```
+import React, { useReducer, useState } from "react";
+
+const initialState = {
+  todos: [],
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "ADD":
+      return {
+        todos: [
+          ...state.todos,
+          {
+            text: action.payload,
+            completed: false,
+          },
+        ],
+      };
+
+    case "TOGGLE":
+      return {
+        todos: state.todos.map((todo, index) =>
+          index === action.payload
+            ? { ...todo, completed: !todo.completed }
+            : todo,
+        ),
+      };
+
+    case "REMOVE":
+      return {
+        todos: state.todos.filter((todo, index) => index !== action.payload),
+      };
+
+    default:
+      return state;
+  }
+}
+
+function Todo() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const [input, setInput] = useState("");
+
+  return (
+    <div>
+      <h2>Todo App</h2>
+
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
+
+      <button
+        onClick={() =>
+          dispatch({
+            type: "ADD",
+            payload: input,
+          })
+        }
+      >
+        Add
+      </button>
+
+      <ul>
+        {state.todos.map((todo, index) => (
+          <li key={index}>
+            <span
+              style={{
+                color: todo.completed ? "gray" : "black",
+                textDecoration: todo.completed ? "line-through" : "none",
+              }}
+            >
+              {todo.text}
+            </span>
+
+            <button
+              onClick={() =>
+                dispatch({
+                  type: "TOGGLE",
+                  payload: index,
+                })
+              }
+            >
+              Toggle
+            </button>
+
+            <button
+              onClick={() =>
+                dispatch({
+                  type: "REMOVE",
+                  payload: index,
+                })
+              }
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default Todo;
+```

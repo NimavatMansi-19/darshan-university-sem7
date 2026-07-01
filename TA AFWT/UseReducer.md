@@ -1,4 +1,4 @@
-# Lab 19: useReducer Hook — Complete Guide with Redux Comparison
+# useReducer Hook — Complete Guide with Redux Comparison
 
 ## Overview
 This lab demonstrates the **`useReducer`** hook in React. We cover its syntax, workflow, and real-world usage with a Todo App, and then compare it side-by-side with **Redux** so you can understand when to use which.

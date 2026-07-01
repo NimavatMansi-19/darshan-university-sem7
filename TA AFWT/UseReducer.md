@@ -1,710 +1,462 @@
-# React `useReducer` Hook - Complete Guide
+# Lab 19: useReducer Hook — Complete Guide with Redux Comparison
 
-## What is useReducer?
-
-`useReducer` is a React Hook used to manage **complex state**.
-
-Instead of updating state directly like `useState`, we send an **action** describing **what happened**, and a **reducer function** decides how the state should change.
-
-Think of it like giving an order to a manager.
-
-You don't change the data yourself.
-
-You simply tell the manager:
-
-> "Increase quantity"
-
-The manager decides how to update everything.
+## Overview
+This lab demonstrates the **`useReducer`** hook in React. We cover its syntax, workflow, and real-world usage with a Todo App, and then compare it side-by-side with **Redux** so you can understand when to use which.
 
 ---
 
-# Real Life Example
+## 📚 What is useReducer?
 
-Imagine a Shopping Cart.
+`useReducer` is a React hook for managing **complex state logic**. Instead of updating state directly (like `useState`), you describe **what happened** (an action) and a **reducer function** decides how the state should change.
 
-You don't directly change the total bill.
+> **Think of it like a restaurant:**
+> - You (component) place an **order** (dispatch an action)
+> - The **kitchen** (reducer) reads the order and prepares the food (new state)
+> - The **waiter** brings the food back (React re-renders with new state)
 
-Instead you perform actions like:
-
-- Add Item
-- Remove Item
-- Clear Cart
-- Increase Quantity
-- Decrease Quantity
-
-The shopkeeper receives your request and updates the bill.
-
-React's `useReducer` works exactly like this.
-
-```
-Customer
-   │
-   ▼
-dispatch(action)
-   │
-   ▼
-Reducer Function
-   │
-   ▼
-Returns New State
-   │
-   ▼
-UI Updates
-```
-
----
-
-# Why not use useState?
-
-Suppose your cart contains:
-
-```javascript
-{
-   items: [],
-   total: 0,
-   discount: 10,
-   tax: 5
-}
-```
-
-With useState, updating everything becomes difficult.
-
-Example:
-
-```javascript
-setCart({
-   ...cart,
-   total: cart.total + 500
-})
-```
-
-Imagine writing dozens of updates like this.
-
-Instead, useReducer lets us simply write
-
-```javascript
-dispatch({
-   type: "ADD_ITEM"
-})
-```
-
-Cleaner and easier.
-
----
-
-# Syntax
-
-```javascript
-const [state, dispatch] = useReducer(reducer, initialState);
-```
-
-There are three parts.
-
-## 1. reducer
-
-A function that decides how state changes.
-
-```javascript
-function reducer(state, action) {
-
-}
-```
-
----
-
-## 2. initialState
-
-Starting value.
-
-```javascript
-const initialState = {
-    count: 0
-}
-```
-
----
-
-## 3. dispatch()
-
-Used to send an action.
-
-```javascript
-dispatch({
-   type: "INCREMENT"
-})
-```
-
-dispatch DOES NOT update state.
-
-It simply sends a message.
-
----
-
-# Visual Flow
-
-```
-Button Click
-      │
-      ▼
-dispatch(action)
-      │
-      ▼
-Reducer
-      │
-      ▼
-Creates New State
-      │
-      ▼
-React Updates UI
-```
-
----
-
-# Understanding Reducer Function
-
-Reducer has two parameters.
-
-```javascript
-(state, action)
-```
-
-Example
-
-```javascript
-function reducer(state, action){
-
-}
-```
-
-### state
-
-Current state
-
-Example
-
-```javascript
-{
-   count:5
-}
-```
-
-### action
-
-What user wants to do.
-
-Example
-
-```javascript
-{
-   type:"INCREMENT"
-}
-```
-
-Reducer checks the action type.
-
----
-
-# Example Reducer
-
-```javascript
-function reducer(state, action){
-
-   switch(action.type){
-
-      case "INCREMENT":
-
-         return {
-             count: state.count + 1
-         }
-
-      case "DECREMENT":
-
-         return {
-             count: state.count - 1
-         }
-
-      default:
-         return state;
-   }
-
-}
-```
-
-Notice:
-
-Reducer NEVER modifies old state.
-
-Always return a NEW object.
-
-Correct
-
-```javascript
-return {
-   count: state.count + 1
-}
-```
-
-Wrong
-
-```javascript
-state.count++;
-
-return state;
-```
-
-Never mutate state.
-
----
-
-# Step 1 : Import Hook
-
-```javascript
-import { useReducer } from "react";
-```
-
----
-
-# Step 2 : Create Initial State
-
-```javascript
-const initialState = {
-    count:0
-}
-```
-
----
-
-# Step 3 : Create Reducer Function
-
-```javascript
-function reducer(state, action){
-
-   switch(action.type){
-
-      case "INCREMENT":
-         return {
-            count: state.count + 1
-         }
-
-      case "DECREMENT":
-         return {
-            count: state.count - 1
-         }
-
-      case "RESET":
-         return {
-            count:0
-         }
-
-      default:
-         return state;
-   }
-
-}
-```
-
----
-
-# Step 4 : Connect useReducer
-
-```javascript
-const [state, dispatch] = useReducer(
-     reducer,
-     initialState
-);
-```
-
-Now
-
-```
-state.count
-```
-
-contains current value.
-
----
-
-# Step 5 : Create Buttons
-
-Increment
-
-```javascript
-<button
-onClick={()=>
-dispatch({
-type:"INCREMENT"
-})
-}
->
-
-Increment
-
-</button>
-```
-
-Decrement
-
-```javascript
-<button
-onClick={()=>
-dispatch({
-type:"DECREMENT"
-})
-}
->
-
-Decrement
-
-</button>
-```
-
-Reset
-
-```javascript
-<button
-onClick={()=>
-dispatch({
-type:"RESET"
-})
-}
->
-
-Reset
-
-</button>
-```
-
-Display
-
-```javascript
-<h2>{state.count}</h2>
-```
-
----
-
-# Complete Counter Program
+### Basic Syntax
 
 ```jsx
-import { useReducer } from "react";
+import { useReducer } from 'react';
 
+const [state, dispatch] = useReducer(reducerFunction, initialState);
+```
+
+| Part | What it is | Example |
+|------|-----------|---------|
+| `state` | Current state value | `{ count: 0 }` |
+| `dispatch` | Function to send actions | `dispatch({ type: 'INCREMENT' })` |
+| `reducerFunction` | Pure function: `(state, action) → newState` | See below |
+| `initialState` | Starting value of state | `{ count: 0 }` |
+
+---
+
+## 🔄 How useReducer Works — Step-by-Step Workflow
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                       useReducer WORKFLOW                            │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   STEP 1: Define Initial State                                       │
+│   ┌──────────────────────────────┐                                   │
+│   │  const initialState = {      │                                   │
+│   │    todos: [                  │                                   │
+│   │      { id: 1, text: '...' } │                                   │
+│   │    ]                         │                                   │
+│   │  }                           │                                   │
+│   └──────────────────────────────┘                                   │
+│                    ↓                                                 │
+│   STEP 2: Define Reducer Function                                    │
+│   ┌──────────────────────────────────────┐                           │
+│   │  function reducer(state, action) {   │                           │
+│   │    switch (action.type) {            │                           │
+│   │      case 'ADD':  → return newState  │  ← Pure function         │
+│   │      case 'TOGGLE': → return ...     │  ← No side effects       │
+│   │      case 'REMOVE': → return ...     │  ← Always returns        │
+│   │      default: → return state         │     new state object      │
+│   │    }                                 │                           │
+│   │  }                                   │                           │
+│   └──────────────────────────────────────┘                           │
+│                    ↓                                                 │
+│   STEP 3: Initialize useReducer in Component                        │
+│   ┌───────────────────────────────────────────────────────┐          │
+│   │  const [state, dispatch] = useReducer(reducer, init)  │          │
+│   └───────────────────────────────────────────────────────┘          │
+│                    ↓                                                 │
+│   STEP 4: Component Dispatches an Action                             │
+│   ┌──────────────────────────────────────────────────┐               │
+│   │  dispatch({ type: 'ADD', payload: 'New Todo' })  │               │
+│   └──────────────────────────────────────────────────┘               │
+│         │                                                            │
+│         │  React receives the action                                 │
+│         ↓                                                            │
+│   STEP 5: Reducer Processes the Action                               │
+│   ┌──────────────────────────────────────────────────┐               │
+│   │  reducer(currentState, { type:'ADD', payload })  │               │
+│   │  → case 'ADD' matches                           │               │
+│   │  → returns { ...state, todos: [..., newTodo] }   │               │
+│   └──────────────────────────────────────────────────┘               │
+│         │                                                            │
+│         ↓                                                            │
+│   STEP 6: React Updates State & Re-renders                           │
+│   ┌──────────────────────────────────────────────────┐               │
+│   │  state = newState → Component re-renders         │               │
+│   │  → UI shows the updated todo list                │               │
+│   └──────────────────────────────────────────────────┘               │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📁 File: Demo.jsx — useRef Basics (Reference file)
+
+This file demonstrates `useRef` use-cases (render counting, input focus, previous value tracking). It is included in the lab for context but is **not** related to `useReducer`.
+
+---
+
+## 📁 File: TodoReducer.jsx — useReducer Todo App
+
+### Complete Code Walkthrough
+
+Let's walk through the `TodoReducer.jsx` file step by step:
+
+#### Step 1: Initial State
+```jsx
 const initialState = {
-  count: 0
+  todos: [
+    { id: 1, text: 'Learn React Hooks', completed: false },
+    { id: 2, text: 'Build a Todo App', completed: false },
+  ],
 };
+```
+> This is the starting state — an object with a `todos` array. Each todo has `id`, `text`, and `completed`.
 
-function reducer(state, action) {
-
+#### Step 2: Reducer Function
+```jsx
+function todoReducer(state, action) {
   switch (action.type) {
-
-    case "INCREMENT":
+    case 'ADD':
       return {
-        count: state.count + 1
+        ...state,
+        todos: [...state.todos, { id: Date.now(), text: action.payload, completed: false }],
       };
-
-    case "DECREMENT":
+    case 'TOGGLE':
       return {
-        count: state.count - 1
-      };
-
-    case "RESET":
-      return {
-        count: 0
-      };
-
-    default:
-      return state;
-  }
-
-}
-
-function App() {
-
-  const [state, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
-
-  return (
-
-    <div>
-
-      <h2>{state.count}</h2>
-
-      <button
-      onClick={()=>
-      dispatch({
-      type:"INCREMENT"
-      })
-      }
-      >
-      +
-      </button>
-
-      <button
-      onClick={()=>
-      dispatch({
-      type:"DECREMENT"
-      })
-      }
-      >
-      -
-      </button>
-
-      <button
-      onClick={()=>
-      dispatch({
-      type:"RESET"
-      })
-      }
-      >
-      Reset
-      </button>
-
-    </div>
-
-  );
-
-}
-
-export default App;
-```
-
----
-
-# Real Life Example : Shopping Cart
-
-Suppose your shopping cart starts with
-
-```javascript
-const initialState = {
-
-    items: [],
-    total:0
-
-}
-```
-
-User clicks
-
-```
-Add Laptop
-```
-
-React executes
-
-```javascript
-dispatch({
-
-   type:"ADD_ITEM",
-
-   payload:{
-      name:"Laptop",
-      price:50000
-   }
-
-})
-```
-
-Reducer receives
-
-```javascript
-function reducer(state, action){
-
-   switch(action.type){
-
-      case "ADD_ITEM":
-
-      return {
-
-         items:[
-             ...state.items,
-             action.payload
-         ],
-
-         total:
-         state.total +
-         action.payload.price
-
-      }
-
-   }
-
-}
-```
-
-Now UI automatically shows
-
-```
-Items : 1
-
-Total : 50000
-```
-
-Without directly changing state.
-
----
-
-# Why dispatch instead of setState?
-
-With useState
-
-```javascript
-setCount(count+1)
-```
-
-With useReducer
-
-```javascript
-dispatch({
-type:"INCREMENT"
-})
-```
-
-dispatch only sends instructions.
-
-Reducer performs the update.
-
-This separates logic from UI.
-
----
-
-# When should we use useReducer?
-
-Use it when
-
-✅ Multiple state values
-
-✅ Complex logic
-
-✅ Shopping Cart
-
-✅ Login Form
-
-✅ Employee Management
-
-✅ Todo Application
-
-✅ Banking Application
-
-✅ Inventory System
-
-
----
-
-# Difference Between useState and useReducer
-
-| useState | useReducer |
-|-----------|------------|
-| Simple state | Complex state |
-| Updates directly | Updates through reducer |
-| Uses setState | Uses dispatch |
-| Easy to learn | Better for large projects |
-| Logic inside component | Logic inside reducer |
-
----
-## Todo List
-```
-import React, { useReducer, useState } from "react";
-
-const initialState = {
-  todos: [],
-};
-
-function reducer(state, action) {
-  switch (action.type) {
-    case "ADD":
-      return {
-        todos: [
-          ...state.todos,
-          {
-            text: action.payload,
-            completed: false,
-          },
-        ],
-      };
-
-    case "TOGGLE":
-      return {
-        todos: state.todos.map((todo, index) =>
-          index === action.payload
-            ? { ...todo, completed: !todo.completed }
-            : todo,
+        ...state,
+        todos: state.todos.map((todo) =>
+          todo.id === action.payload ? { ...todo, completed: !todo.completed } : todo
         ),
       };
-
-    case "REMOVE":
+    case 'REMOVE':
       return {
-        todos: state.todos.filter((todo, index) => index !== action.payload),
+        ...state,
+        todos: state.todos.filter((todo) => todo.id !== action.payload),
       };
+    default:
+      return state;
+  }
+}
+```
 
+**How each action works:**
+
+| Action Type | What `action.payload` contains | What happens |
+|-------------|-------------------------------|--------------|
+| `'ADD'` | The text of new todo (string) | Spreads existing todos, adds new one at end |
+| `'TOGGLE'` | The `id` of the todo to toggle | Maps over all todos, flips `completed` for matching id |
+| `'REMOVE'` | The `id` of the todo to delete | Filters out the todo with matching id |
+| `default` | — | Returns state unchanged (safety net) |
+
+> ⚠️ **Important:** The reducer NEVER mutates the original state. It always returns a **new object** using spread operator (`...state`).
+
+#### Step 3: Component Using useReducer
+```jsx
+function TodoReducer() {
+  const [state, dispatch] = useReducer(todoReducer, initialState);
+  const [input, setInput] = useState('');
+  //     ↑                    ↑
+  //  current state        function to
+  //  (has .todos)         send actions
+```
+
+#### Step 4: Dispatching Actions
+```jsx
+// ADD a new todo
+dispatch({ type: 'ADD', payload: input.trim() });
+
+// TOGGLE a todo's completed status
+dispatch({ type: 'TOGGLE', payload: todo.id });
+
+// REMOVE a todo
+dispatch({ type: 'REMOVE', payload: todo.id });
+```
+
+### Visual Flow of Adding a Todo
+
+```
+User types "Study for exam" and clicks Add
+          │
+          ↓
+dispatch({ type: 'ADD', payload: 'Study for exam' })
+          │
+          ↓
+todoReducer(currentState, { type: 'ADD', payload: 'Study for exam' })
+          │
+          ↓
+case 'ADD' matches → returns:
+{
+  todos: [
+    { id: 1, text: 'Learn React Hooks', completed: false },
+    { id: 2, text: 'Build a Todo App', completed: false },
+    { id: 1719832800000, text: 'Study for exam', completed: false }  ← NEW
+  ]
+}
+          │
+          ↓
+React re-renders → UI shows 3 todos
+```
+
+---
+
+## 🆚 useReducer vs Redux — Side-by-Side Comparison
+
+### The Fundamental Difference
+
+| Aspect | useReducer | Redux (+ Redux Toolkit) |
+|--------|-----------|------------------------|
+| **What is it?** | A React **hook** (built into React) | An **external library** (needs `npm install`) |
+| **Scope** | Local to **one component** (+ children via props/context) | **Global** — accessible by any component in the app |
+| **Setup** | Zero setup — just import from 'react' | Needs: store, slices, Provider, npm packages |
+| **Package size** | 0 KB (included in React) | ~11 KB (Redux Toolkit + React-Redux) |
+| **Learning curve** | Low — just a function and dispatch | Medium — store, slices, selectors, middleware |
+
+### Architecture Comparison
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    useReducer Architecture                    │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   Component                                                  │
+│   ┌────────────────────────────────────────┐                 │
+│   │  const [state, dispatch] = useReducer  │                 │
+│   │                                        │                 │
+│   │  state lives HERE, inside component    │                 │
+│   │  dispatch lives HERE, inside component │                 │
+│   │                                        │                 │
+│   │  To share? → Pass via props or Context │                 │
+│   └────────────────────────────────────────┘                 │
+│                                                              │
+│   ✅ Simple, self-contained                                  │
+│   ❌ Hard to share across distant components                 │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│                    Redux Architecture                        │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌──────────────────────────────┐                           │
+│   │   GLOBAL STORE (single)      │  ← Lives outside React   │
+│   │   ┌───────────────────────┐  │                           │
+│   │   │ slice: cart           │  │                           │
+│   │   │ slice: user           │  │                           │
+│   │   │ slice: theme          │  │                           │
+│   │   └───────────────────────┘  │                           │
+│   └────────────┬─────────────────┘                           │
+│                │                                             │
+│       <Provider store={store}>                               │
+│                │                                             │
+│   ┌────────────┴─────────────────┐                           │
+│   │  ANY component can:          │                           │
+│   │  • useSelector(state => ...) │  ← Read from store       │
+│   │  • useDispatch()             │  ← Write to store        │
+│   └──────────────────────────────┘                           │
+│                                                              │
+│   ✅ Easy to share across entire app                         │
+│   ❌ More boilerplate and setup                              │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Code Comparison — Same Todo App
+
+#### useReducer Version (this lab)
+```jsx
+// ━━━━━━━━━━━ Everything in ONE file ━━━━━━━━━━━
+
+import { useReducer, useState } from 'react';
+
+// 1. Initial state
+const initialState = {
+  todos: [{ id: 1, text: 'Learn Hooks', completed: false }],
+};
+
+// 2. Reducer function
+function todoReducer(state, action) {
+  switch (action.type) {
+    case 'ADD':
+      return { ...state, todos: [...state.todos, { id: Date.now(), text: action.payload, completed: false }] };
+    case 'TOGGLE':
+      return { ...state, todos: state.todos.map(t => t.id === action.payload ? { ...t, completed: !t.completed } : t) };
+    case 'REMOVE':
+      return { ...state, todos: state.todos.filter(t => t.id !== action.payload) };
     default:
       return state;
   }
 }
 
-function Todo() {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [input, setInput] = useState("");
+// 3. Component
+function TodoApp() {
+  const [state, dispatch] = useReducer(todoReducer, initialState);
+  //     ↑ use directly       ↑ dispatch directly
 
   return (
     <div>
-      <h2>Todo App</h2>
-
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-
-      <button
-        onClick={() =>
-          dispatch({
-            type: "ADD",
-            payload: input,
-          })
-        }
-      >
-        Add
-      </button>
-
-      <ul>
-        {state.todos.map((todo, index) => (
-          <li key={index}>
-            <span
-              style={{
-                color: todo.completed ? "gray" : "black",
-                textDecoration: todo.completed ? "line-through" : "none",
-              }}
-            >
-              {todo.text}
-            </span>
-
-            <button
-              onClick={() =>
-                dispatch({
-                  type: "TOGGLE",
-                  payload: index,
-                })
-              }
-            >
-              Toggle
-            </button>
-
-            <button
-              onClick={() =>
-                dispatch({
-                  type: "REMOVE",
-                  payload: index,
-                })
-              }
-            >
-              Remove
-            </button>
-          </li>
-        ))}
-      </ul>
+      <button onClick={() => dispatch({ type: 'ADD', payload: 'New' })}>Add</button>
+      {state.todos.map(todo => <div key={todo.id}>{todo.text}</div>)}
     </div>
   );
 }
-
-export default Todo;
 ```
+
+#### Redux Toolkit Version (for comparison)
+```jsx
+// ━━━━━━━━━━━ File 1: store/todoSlice.js ━━━━━━━━━━━
+import { createSlice } from '@reduxjs/toolkit';
+
+const todoSlice = createSlice({
+  name: 'todos',
+  initialState: {
+    todos: [{ id: 1, text: 'Learn Redux', completed: false }],
+  },
+  reducers: {
+    add: (state, action) => {
+      state.todos.push({ id: Date.now(), text: action.payload, completed: false });
+      // ↑ Redux Toolkit uses Immer, so you CAN mutate directly (it handles immutability)
+    },
+    toggle: (state, action) => {
+      const todo = state.todos.find(t => t.id === action.payload);
+      if (todo) todo.completed = !todo.completed;
+    },
+    remove: (state, action) => {
+      state.todos = state.todos.filter(t => t.id !== action.payload);
+    },
+  },
+});
+
+export const { add, toggle, remove } = todoSlice.actions;
+export default todoSlice.reducer;
+
+// ━━━━━━━━━━━ File 2: store/store.js ━━━━━━━━━━━
+import { configureStore } from '@reduxjs/toolkit';
+import todoReducer from './todoSlice';
+
+export const store = configureStore({
+  reducer: { todos: todoReducer },
+});
+
+// ━━━━━━━━━━━ File 3: main.jsx ━━━━━━━━━━━
+import { Provider } from 'react-redux';
+import { store } from './store/store';
+
+<Provider store={store}>
+  <App />
+</Provider>
+
+// ━━━━━━━━━━━ File 4: TodoApp.jsx ━━━━━━━━━━━
+import { useSelector, useDispatch } from 'react-redux';
+import { add, toggle, remove } from './store/todoSlice';
+
+function TodoApp() {
+  const todos = useSelector(state => state.todos.todos);
+  //           ↑ reads from GLOBAL store
+  const dispatch = useDispatch();
+  //              ↑ gets dispatch from GLOBAL store
+
+  return (
+    <div>
+      <button onClick={() => dispatch(add('New'))}>Add</button>
+      {todos.map(todo => <div key={todo.id}>{todo.text}</div>)}
+    </div>
+  );
+}
+```
+
+### Key Differences in Code
+
+| Feature | useReducer | Redux Toolkit |
+|---------|-----------|---------------|
+| **Immutability** | You MUST return new objects with `...spread` | Immer handles it — you can `state.push()` directly |
+| **Action creators** | Write manually: `{ type: 'ADD', payload: ... }` | Auto-generated: `add(payload)` |
+| **Accessing state** | Direct: `state.todos` | Via selector: `useSelector(s => s.todos.todos)` |
+| **Dispatching** | Direct from `useReducer`: `dispatch(action)` | From hook: `const dispatch = useDispatch()` |
+| **Store setup** | None | `configureStore()` + `<Provider>` |
+| **Files needed** | 1 file | 3-4 files (slice, store, provider, component) |
+| **Middleware** | Not supported | Built-in (thunks for async, logging, etc.) |
+| **DevTools** | No | Redux DevTools (time-travel debugging!) |
+
+---
+
+## 🤔 When to Use Which?
+
+### Use `useReducer` when:
+- ✅ State logic is complex but **local to one component**
+- ✅ Multiple related state values change together
+- ✅ You have a simple app or a single form/feature
+- ✅ You don't want to install external packages
+- ✅ State doesn't need to be shared across many unrelated components
+
+### Use Redux when:
+- ✅ **Multiple distant components** need the same state
+- ✅ You need **DevTools** for debugging (time-travel!)
+- ✅ You need **middleware** (async operations, logging, analytics)
+- ✅ The app is **large scale** with many features sharing state
+- ✅ You want centralized, predictable state management
+
+### Decision Flowchart
+
+```
+Is the state shared across many distant components?
+  │
+  ├── YES → Use Redux
+  │
+  └── NO → Is the state logic complex (multiple actions, nested updates)?
+            │
+            ├── YES → Use useReducer
+            │
+            └── NO → Use useState (simplest option!)
+```
+
+---
+
+## 🏃 How to Run
+
+1. Import the component in `App.jsx`:
+   ```jsx
+   import TodoReducer from './Labs/lab-19/TodoReducer';
+   ```
+2. Add it inside the return:
+   ```jsx
+   <TodoReducer />
+   ```
+3. Run: `npm run dev`
+4. Test: Add todos, toggle completion, delete todos
+
+---
+
+## File Structure
+
+```
+lab-19/
+  ├── Demo.jsx         (useRef demo — render count, focus, previous value)
+  ├── TodoReducer.jsx  (useReducer — full Todo app with ADD/TOGGLE/REMOVE)
+  └── README.md        (this file)
+```
+
+---
+
+## 📝 Summary Table
+
+| Concept | useState | useReducer | Redux |
+|---------|----------|-----------|-------|
+| Complexity | Simple | Medium | High |
+| State scope | Local | Local (+ Context) | Global |
+| Action types | None | Manual strings | Auto-generated |
+| Immutability | Manual | Manual | Automatic (Immer) |
+| Async support | Manual | Manual | Middleware (Thunks) |
+| DevTools | No | No | Yes |
+| Install needed | No | No | Yes |
+| Best for | Toggles, forms | Complex local logic | Large apps |
+
+---
+
+## 💡 Key Takeaways
+
+1. **useReducer = local state manager** — the reducer pattern without the boilerplate of Redux
+2. **dispatch({ type, payload })** is how you communicate "what happened" to the reducer
+3. **Never mutate state directly** in useReducer — always return a new object
+4. **Redux = useReducer + global store + middleware + DevTools** — it's the same pattern, scaled up
+5. Start with `useState`, graduate to `useReducer` when logic gets complex, and use Redux when you need global shared state

@@ -1,495 +1,850 @@
-# Lab 25: Implement Basic Chat Application using Socket.IO
+# Socket.IO Chat Application Notes
 
-## Aim
-Implement a basic real-time chat application using **Socket.IO** where multiple users can send and receive messages instantly.
+## What is Socket?
+
+A **Socket** is a communication endpoint that allows **two-way (bidirectional)** communication between a client and a server.
+
+Unlike HTTP, where:
+
+```
+Client ---> Request ---> Server
+Client <--- Response <--- Server
+```
+
+Socket allows continuous communication:
+
+```
+Client <-------------------------> Server
+        Send & Receive Anytime
+```
+
+The connection remains open until either the client or server disconnects.
 
 ---
 
 # What is Socket.IO?
 
-**Socket.IO** is a JavaScript library that enables **real-time, bidirectional communication** between the client (browser) and the server.
+**Socket.IO** is a JavaScript library that provides real-time communication between client and server.
 
-Unlike HTTP, where the client sends a request and waits for a response, Socket.IO maintains a **persistent connection** so both the client and server can send data at any time.
+It works on top of **WebSocket** and automatically falls back to other protocols if WebSocket is unavailable.
 
-### Example
+### Installation
 
-Think of **WhatsApp**.
-
-- You send a message.
-- The other user receives it instantly.
-- No page refresh is required.
-
-This real-time communication is achieved using **WebSockets**, with Socket.IO providing additional features such as automatic reconnection and fallback transports.
-
----
-
-# Why Do We Need Socket.IO?
-
-Normally, web applications use the **HTTP request-response model**.
-
-```
-Client -------- Request --------> Server
-Client <------- Response -------- Server
-```
-
-If new data (such as a chat message) arrives, the browser must repeatedly ask the server for updates.
-
-This process is called **Polling**.
-
-### Problems with Polling
-
-- Generates unnecessary network requests
-- Slower response time
-- Wastes bandwidth
-- Poor user experience
-
-Socket.IO solves this by maintaining a persistent connection.
-
-```
-Client <=======================> Server
-        Continuous Connection
-```
-
-The server can now send data instantly whenever an event occurs.
-
----
-
-# Features of Socket.IO
-
-- Real-time communication
-- Bidirectional (two-way) communication
-- Event-based architecture
-- Automatic reconnection
-- Cross-browser support
-- Supports broadcasting
-- Supports rooms and namespaces
-- Easy integration with Express.js
-
----
-
-# Real-Life Applications
-
-- WhatsApp
-- Facebook Messenger
-- Discord
-- Google Docs
-- Live Cricket Score
-- Online Multiplayer Games
-- Stock Market Applications
-- Notification Systems
-
----
-
-# Installation
-
-## Step 1: Create Project
-
-```bash
-mkdir chat-app
-cd chat-app
-npm init -y
-```
-
-## Step 2: Install Required Packages
+Server
 
 ```bash
 npm install express socket.io
 ```
 
----
+Client
 
-# Project Structure
-
-```
-chat-app
-│
-├── server.js
-│
-├── public
-│   ├── index.html
-│   ├── script.js
-│   └── style.css
-│
-└── package.json
+```bash
+npm install socket.io-client
 ```
 
 ---
 
-# How Socket.IO Works
+# Advantages
+
+- Real-time communication
+- Two-way communication
+- Low latency
+- Automatic reconnection
+- Event-based programming
+- Works across browsers
+
+---
+
+# Project Architecture
+
+```
+                Socket Connection
+
++--------------------+        +----------------------+
+|                    |        |                      |
+| React Application  |<-----> | Express + Socket.IO |
+|    (Client)        |        |      (Server)       |
+|                    |        |                      |
++--------------------+        +----------------------+
+```
+
+---
+
+# Code Flow
+
+```
+React Starts
+      │
+      ▼
+Creates Socket Connection
+      │
+      ▼
+Connects to Express Server
+      │
+      ▼
+Server Generates Socket ID
+      │
+      ▼
+Connection Established
+      │
+      ▼
+User Types Message
+      │
+      ▼
+socket.emit("message")
+      │
+      ▼
+Server Receives Event
+      │
+      ▼
+io.emit("receive-message")
+      │
+      ▼
+Every Connected Client Receives Message
+      │
+      ▼
+React Updates UI
+```
+
+---
+
+# Server Code Explanation
+
+## Import Modules
+
+```javascript
+import express from "express";
+import { Server } from "socket.io";
+```
+
+### express
+
+Creates HTTP server.
+
+### Server
+
+Socket.IO server class.
+
+---
+
+## Create Express App
+
+```javascript
+const app = express();
+```
+
+Creates Express application.
+
+---
+
+## Start HTTP Server
+
+```javascript
+const httpServer = app.listen(2000, () => {
+    console.log("Server started");
+});
+```
+
+Server listens on **Port 2000**.
+
+---
+
+## Attach Socket.IO
+
+```javascript
+const io = new Server(httpServer,{
+    cors:{
+        origin:"http://localhost:5173"
+    }
+});
+```
+
+Socket.IO uses the existing HTTP server.
+
+### Why CORS?
+
+React runs on
+
+```
+http://localhost:5173
+```
+
+Server runs on
+
+```
+http://localhost:2000
+```
+
+Different origins cannot communicate unless CORS is enabled.
+
+---
+
+## Listen for Connection
+
+```javascript
+io.on("connection",(socket)=>{
+```
+
+Runs every time a client connects.
+
+Example
+
+```
+Client 1 connects
+
+↓
+
+socket.id = abcd123
+```
+
+Another client
+
+```
+socket.id = xyz987
+```
+
+Each client has a unique Socket ID.
+
+---
+
+## Print Socket ID
+
+```javascript
+console.log(socket.id + " connected");
+```
+
+Example Output
+
+```
+NluZkRpdYo8AXjSRAAAE connected
+```
+
+---
+
+## socket.onAny()
+
+```javascript
+socket.onAny((event,...args)=>{
+    console.log(event);
+});
+```
+
+Listens to **every event**.
+
+Useful for debugging.
+
+If client sends
+
+```javascript
+socket.emit("message","Hello");
+```
+
+Output
+
+```
+Event : message
+Arguments : Hello
+```
+
+---
+
+## Receive Message
+
+```javascript
+socket.on("message",(msg)=>{
+```
+
+Waits for
+
+```javascript
+socket.emit("message",...)
+```
+
+from client.
+
+---
+
+## Print Message
+
+```javascript
+console.log("Client:",msg);
+```
+
+Output
+
+```
+Client : Hello
+```
+
+---
+
+## Broadcast Message
+
+```javascript
+io.emit("receive-message",msg);
+```
+
+Sends message to **all connected clients**.
+
+Suppose three clients exist.
 
 ```
 Client A
-     │
-     │
- Socket
-     │
-     │
-Socket.IO Server
-     │
-     │
- Socket
-     │
+
 Client B
+
+Client C
 ```
 
-### Working Process
+A sends
 
-1. Client connects to the server.
-2. User types a message.
-3. Client sends the message using an event.
-4. Server receives the event.
-5. Server broadcasts the message.
-6. All connected clients receive and display the message.
+```
+Hello
+```
+
+Server broadcasts
+
+```
+Hello
+```
+
+Everyone receives
+
+```
+A
+B
+C
+```
+
+including sender.
 
 ---
 
-# Basic Workflow
+## Disconnect
+
+```javascript
+socket.on("disconnect",()=>{
+```
+
+Runs when user closes browser or disconnects.
+
+Output
 
 ```
-User Types Message
+abcd123 disconnected
+```
+
+---
+
+# Client Code Explanation
+
+## Import
+
+```javascript
+import { io } from "socket.io-client";
+```
+
+Allows React to connect to Socket.IO server.
+
+---
+
+## Create Socket
+
+```javascript
+const socket = useMemo(()=>
+    io("http://localhost:2000"),[]);
+```
+
+Creates only one socket connection.
+
+### Why useMemo?
+
+Without it
+
+```
+Component Re-render
+
+↓
+
+New Socket
+
+↓
+
+New Socket
+
+↓
+
+New Socket
+```
+
+Multiple unnecessary connections are created.
+
+Using
+
+```javascript
+useMemo()
+```
+
+creates only one socket instance.
+
+---
+
+## State
+
+```javascript
+const [message,setMessage]=useState("");
+```
+
+Stores input message.
+
+Example
+
+```
+Hello
+```
+
+---
+
+```javascript
+const [messages,setMessages]=useState([]);
+```
+
+Stores chat history.
+
+Example
+
+```
+[
+Hello,
+How are you?,
+Bye
+]
+```
+
+---
+
+# useEffect()
+
+Runs after component mounts.
+
+---
+
+## Connect Event
+
+```javascript
+socket.on("connect",()=>{
+```
+
+Runs once connection is established.
+
+Output
+
+```
+Connected to server
+
+Socket ID : xyz123
+```
+
+---
+
+## Disconnect Event
+
+```javascript
+socket.on("disconnect",()=>{
+```
+
+Runs when connection closes.
+
+Output
+
+```
+Disconnected
+```
+
+---
+
+## Receive Message
+
+```javascript
+socket.on("receive-message",(msg)=>{
+```
+
+Server emits
+
+```javascript
+io.emit("receive-message",msg);
+```
+
+React receives it.
+
+---
+
+## Update UI
+
+```javascript
+setMessages(prev=>[...prev,msg]);
+```
+
+Example
+
+Before
+
+```
+[
+Hello
+]
+```
+
+Receive
+
+```
+How are you?
+```
+
+After
+
+```
+[
+Hello,
+How are you?
+]
+```
+
+---
+
+## Cleanup
+
+```javascript
+return ()=>{
+```
+
+Removes event listeners.
+
+```javascript
+socket.off("connect");
+socket.off("disconnect");
+socket.off("receive-message");
+```
+
+Finally disconnects
+
+```javascript
+socket.disconnect();
+```
+
+Prevents memory leaks.
+
+---
+
+# sendMessage()
+
+```javascript
+socket.emit("message",message);
+```
+
+Sends event to server.
+
+Example
+
+```
+message = "Hi"
+```
+
+Sends
+
+```
+Event : message
+
+Data : Hi
+```
+
+---
+
+Then
+
+```javascript
+setMessage("");
+```
+
+Clears input box.
+
+---
+
+# JSX
+
+Input
+
+```javascript
+<input
+value={message}
+onChange={(e)=>setMessage(e.target.value)}
+/>
+```
+
+User types
+
+```
+Hello
+```
+
+State updates continuously.
+
+---
+
+Button
+
+```javascript
+<button onClick={sendMessage}>
+```
+
+Calls
+
+```
+sendMessage()
+```
+
+---
+
+Display Messages
+
+```javascript
+messages.map(...)
+```
+
+Displays
+
+```
+Hello
+
+How are you?
+
+Bye
+```
+
+---
+
+# Complete Message Flow
+
+```
+User Types
+
         │
         ▼
-Client emits event
+
+message State Updated
+
         │
         ▼
-Server receives event
+
+Click Send
+
         │
         ▼
-Server broadcasts event
+
+socket.emit("message")
+
         │
         ▼
-All connected clients receive message
+
+Server Receives
+
+socket.on("message")
+
         │
         ▼
-Message displayed
+
+Server Prints Message
+
+        │
+        ▼
+
+io.emit("receive-message")
+
+        │
+        ▼
+
+All Clients Receive
+
+        │
+        ▼
+
+setMessages()
+
+        │
+        ▼
+
+React Re-renders
+
+        │
+        ▼
+
+Chat Updated
 ```
 
 ---
 
 # Important Socket.IO Methods
 
-## Server Side
-
-### Creating Socket.IO Server
-
-```javascript
-const express = require("express");
-const app = express();
-
-const http = require("http").createServer(app);
-
-const io = require("socket.io")(http);
-```
-
----
-
-### Detect Client Connection
-
-```javascript
-io.on("connection", (socket) => {
-    console.log("User Connected");
-});
-```
-
-Runs whenever a new client connects.
+| Method | Purpose |
+|---------|---------|
+| `io()` | Connect to server |
+| `new Server()` | Create Socket.IO server |
+| `io.on("connection")` | Detect new client |
+| `socket.on()` | Listen for one event |
+| `socket.onAny()` | Listen for every event |
+| `socket.emit()` | Send event to server |
+| `io.emit()` | Send event to all clients |
+| `socket.off()` | Remove event listener |
+| `socket.disconnect()` | Close connection |
 
 ---
 
-### Receive Data
+# Difference Between socket.emit() and io.emit()
 
-```javascript
-socket.on("chat message", (msg) => {
-    console.log(msg);
-});
-```
-
-Listens for messages sent by clients.
-
----
-
-### Send Message to Everyone
-
-```javascript
-io.emit("chat message", msg);
-```
-
-Broadcasts the message to all connected users.
-
----
-
-### Detect Disconnection
-
-```javascript
-socket.on("disconnect", () => {
-    console.log("User Disconnected");
-});
-```
-
-Runs when a client disconnects.
-
----
-
-# Client Side
-
-## Connect to Server
-
-```javascript
-const socket = io();
-```
-
----
-
-## Send Data
-
-```javascript
-socket.emit("chat message", message);
-```
-
----
-
-## Receive Data
-
-```javascript
-socket.on("chat message", (msg) => {
-    console.log(msg);
-});
-```
-
----
-
-# Socket.IO Events
-
-Socket.IO works using **events**.
+### socket.emit()
 
 ```
 Client
-
-socket.emit("chat message")
-
-        │
-
-        ▼
-
+   │
+   ▼
 Server
-
-socket.on("chat message")
-
-        │
-
-        ▼
-
-Server
-
-io.emit("chat message")
-
-        │
-
-        ▼
-
-Clients
-
-socket.on("chat message")
 ```
 
----
+Sends data from one socket.
 
-# Chat Application
-
-## Step 1: Server (server.js)
+Example
 
 ```javascript
-const express = require("express");
-const app = express();
+socket.emit("message","Hello");
+```
 
-const http = require("http").createServer(app);
+---
 
-const io = require("socket.io")(http);
+### io.emit()
 
-app.use(express.static("public"));
+```
+          Server
+      /      |      \
+     ▼       ▼       ▼
+Client A  Client B Client C
+```
 
-io.on("connection", (socket) => {
+Broadcasts data to **every connected client**.
 
-    console.log("User Connected");
-
-    socket.on("chat message", (msg) => {
-
-        io.emit("chat message", msg);
-
+---
+### Backend/Server.js
+```
+import express from "express";
+import { Server } from "socket.io";
+const app=express();
+const httpServer = app.listen(2000, () => {
+    console.log("Server started on port 2000");
+});
+const io = new Server(httpServer, {
+    cors: {
+        origin: "http://localhost:5173"
+    }
+});
+io.on("connection",(socket)=>{
+    console.log(socket.id+" connected")
+        socket.on("message", (msg) => {
+            console.log("Client:", msg);
+        });
+ socket.on("disconnect", () => {
+        console.log(socket.id + " disconnected");
     });
 
-    socket.on("disconnect", () => {
 
-        console.log("User Disconnected");
-
-    });
-
-});
-
-http.listen(3000, () => {
-
-    console.log("Server Running on Port 3000");
-
-});
-```
-
----
-
-## Step 2: HTML (index.html)
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-
-    <title>Chat Application</title>
-
-    <link rel="stylesheet" href="style.css">
-
-</head>
-
-<body>
-
-<div class="chat">
-
-    <ul id="messages"></ul>
-
-    <input
-        id="message"
-        type="text"
-        placeholder="Enter message">
-
-    <button onclick="sendMessage()">
-        Send
-    </button>
-
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-
-<script src="script.js"></script>
-
-</body>
-</html>
-```
-
----
-
-## Step 3: Client (script.js)
-
-```javascript
-const socket = io();
-
-function sendMessage(){
-
-    const input = document.getElementById("message");
-
-    socket.emit("chat message", input.value);
-
-    input.value = "";
-
-}
-
-socket.on("chat message", function(msg){
-
-    const li = document.createElement("li");
-
-    li.textContent = msg;
-
-    document.getElementById("messages").appendChild(li);
-
-});
-```
-
----
-
-## Step 4: CSS (style.css)
-
-```css
-body{
-
-    font-family: Arial;
-
-    display:flex;
-
-    justify-content:center;
-
-    margin-top:50px;
-
-}
-
-.chat{
-
-    width:350px;
-
-}
-
-#messages{
-
-    height:300px;
-
-    border:1px solid gray;
-
-    overflow:auto;
-
-    list-style:none;
-
-    padding:10px;
-
-}
-
-input{
-
-    width:75%;
-
-    padding:10px;
-
-}
-
-button{
-
-    padding:10px;
-
-}
-```
-
-
-
-# Message Flow
+})
 
 ```
-Client A
-    │
-    │ socket.emit()
-    ▼
-Server
-    │
-    │ io.emit()
-    ▼
-───────────────────────────────
-│                             │
-▼                             ▼
-Client A                  Client B
-
-Display Message        Display Message
+### Frontend/ChatApp.jsx
 ```
+import { useEffect, useMemo, useState } from "react";
+import { io } from "socket.io-client";
 
----
+function ChatApp() {
 
-# Advantages of Socket.IO
+    
+    const socket = useMemo(() => io("http://localhost:2000"), []);
 
-- Real-time communication
-- Faster than repeated HTTP requests
-- No page refresh required
-- Easy implementation
-- Automatic reconnection
-- Cross-platform support
-- Supports broadcasting and private messaging
+    const [message, setMessage] = useState("");
+    const [messages, setMessages] = useState([]);
 
----
+    useEffect(() => {
 
-# Disadvantages
+        socket.on("connect", () => {
+            console.log("Connected to server");
+            console.log("Socket ID:", socket.id);
+        });
 
-- Requires a persistent server connection
-- Uses more server resources than HTTP
-- Slightly harder to scale for very large applications
+        // Disconnected
+        socket.on("disconnect", () => {
+            console.log("Disconnected from server");
+        });
 
+        // Receive message from server
+        socket.on("receive-message", (msg) => {
+            console.log("Received:", msg);
+            setMessages((prev) => [...prev, msg]);
+        });
+
+        
+        return () => {
+            socket.off("connect");
+            socket.off("disconnect");
+            socket.off("receive-message");
+            socket.disconnect();
+        };
+
+    }, [socket]);
+
+    const sendMessage = () => {
+    console.log("Connected?", socket.connected);
+    console.log("Socket ID:", socket.id);
+
+    socket.emit("message", message);
+
+    console.log("Sent:", message);
+
+    setMessage("");
+};
+
+    return (
+        <div style={{ padding: "20px" }}>
+            <h2>Socket Chat</h2>
+
+            <input
+                type="text"
+                placeholder="Enter message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+            />
+
+            <button onClick={sendMessage}>
+                Send
+            </button>
+
+            <hr />
+
+            {messages.map((msg, index) => (
+                <p key={index}>{msg}</p>
+            ))}
+        </div>
+    );
+}
+
+export default ChatApp;
+```
+# Key Points to Remember
+
+- Socket provides persistent two-way communication.
+- Socket.IO is event-driven.
+- Every connected client gets a unique `socket.id`.
+- `socket.emit()` sends an event.
+- `socket.on()` receives an event.
+- `io.emit()` broadcasts to all connected clients.
+- `useMemo()` prevents multiple socket connections on re-render.
+- `useEffect()` is used to register socket events after the component mounts.
+- Cleanup using `socket.off()` and `socket.disconnect()` avoids memory leaks.
+- React updates the UI whenever a new message is added to the `messages` state.
